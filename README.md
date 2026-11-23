@@ -9,6 +9,14 @@ This implementation follows Microsoft’s native [Copilot UX component](https://
 </p>
 <p align="center"><sub>Native SPFx Copilot UX running in the tenant Copilot Workbench with filtered Copilot Studio change records.</sub></p>
 
+### Agent screenshots
+
+| Change portfolio | Selected change details | Fullscreen experience |
+|---|---|---|
+| <img src="./assets/screenshots/servicenow-copilot-ux-workbench.png" alt="ServiceNow Copilot Change Intelligence agent showing the change portfolio" width="420"> | <img src="./assets/screenshots/servicenow-copilot-ux-selected-change.png" alt="ServiceNow Copilot Change Intelligence agent showing selected change details" width="420"> | <img src="./assets/screenshots/servicenow-copilot-ux-fullscreen.png" alt="ServiceNow Copilot Change Intelligence agent in fullscreen mode" width="420"> |
+
+The same native component supports portfolio filtering, record drill-down, and inline or fullscreen rendering in Microsoft 365 Copilot.
+
 ## What this sample demonstrates
 
 - SPFx `CopilotComponent` with `copilotType: "Ux"`
@@ -129,16 +137,6 @@ Confirm:
 - keyboard users can select rows with Enter or Space;
 - light and dark host themes remain readable.
 
-<p align="center">
-  <img src="./assets/screenshots/servicenow-copilot-ux-selected-change.png" alt="Selected ServiceNow-style Copilot update with full change details" width="1200">
-</p>
-<p align="center"><sub>Selecting a change record opens its source, rollout status, priority, ownership, and description.</sub></p>
-
-<p align="center">
-  <img src="./assets/screenshots/servicenow-copilot-ux-fullscreen.png" alt="ServiceNow Copilot Change Intelligence component in fullscreen mode" width="1200">
-</p>
-<p align="center"><sub>The same native component supports the Copilot fullscreen display mode.</sub></p>
-
 ## Agent prompts
 
 After deployment, try:
@@ -226,18 +224,46 @@ The package is created under:
 sharepoint/solution/service-now-copilot-updates-ux.sppkg
 ```
 
-## Deploy
+## Deploy as a Microsoft 365 Copilot agent
+
+Download the ready-to-deploy package from the
+[v0.1.0 release](https://github.com/ukpkumar/Copilot-UX-ServiceNow-Connector-Sample-Agent/releases/tag/v0.1.0),
+or build it locally using the command above.
+
+### 1. Deploy through the SharePoint app catalog
 
 1. Open the tenant SharePoint app catalog.
 2. Open **Apps for SharePoint**.
-3. Upload `sharepoint/solution/service-now-copilot-updates-ux.sppkg`.
+3. Upload `service-now-copilot-updates-ux.sppkg`.
 4. Keep **Enable this app and add it to all sites** selected.
 5. Select **Enable app**.
-6. Select the app in the catalog.
-7. Select **Add to Teams** to deploy the declarative agent.
-8. Wait for propagation.
-9. Open Microsoft 365 Copilot.
-10. Locate **ServiceNow Copilot Change Intelligence** and add it.
+6. Select the uploaded application.
+7. Select **Add to Teams**.
+
+**Add to Teams** synchronizes the declarative agent and its native Copilot UX component to the tenant app catalog. If the tenant does not have an app catalog yet, a SharePoint administrator must create it before uploading the package.
+
+### 2. Add the agent in Microsoft 365 Copilot
+
+After tenant propagation:
+
+1. Open [Microsoft 365 Copilot](https://m365.cloud.microsoft/chat).
+2. Open **Agents**, then **Get agents** or **All agents**.
+3. Search for **ServiceNow Copilot Change Intelligence**.
+4. Select **Add**, then open the agent.
+5. Try one of the prompts in the [Agent prompts](#agent-prompts) section.
+
+The first tool invocation may request permission. Select **Allow** so the agent can render `ServiceNowCopilotUpdatesTool`.
+
+### Verified deployment
+
+The packaged sample was deployed successfully to a Microsoft 365 test tenant on November 23, 2026:
+
+- SharePoint accepted the package as a valid custom app.
+- The solution was enabled tenant-wide and added to all sites.
+- **Add to Teams** completed successfully, publishing the declarative agent package.
+- The app catalog reported version `1.0.0.0` as **Enabled**.
+
+Tenant agent-catalog propagation is asynchronous and can take several minutes after **Add to Teams** completes.
 
 ## Important distinction
 
