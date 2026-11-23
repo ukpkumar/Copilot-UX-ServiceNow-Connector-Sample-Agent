@@ -15,7 +15,7 @@ This implementation follows Microsoft’s native [Copilot UX component](https://
 |---|---|---|
 | <img src="./assets/screenshots/servicenow-copilot-ux-workbench.png" alt="ServiceNow Copilot Change Intelligence agent showing the change portfolio" width="420"> | <img src="./assets/screenshots/servicenow-copilot-ux-selected-change.png" alt="ServiceNow Copilot Change Intelligence agent showing selected change details" width="420"> | <img src="./assets/screenshots/servicenow-copilot-ux-fullscreen.png" alt="ServiceNow Copilot Change Intelligence agent in fullscreen mode" width="420"> |
 
-The same native component supports portfolio filtering, record drill-down, and inline or fullscreen rendering in Microsoft 365 Copilot.
+These tenant test captures show portfolio filtering, record drill-down, and inline or fullscreen rendering with the same native component.
 
 ## What this sample demonstrates
 
@@ -263,7 +263,44 @@ The packaged sample was deployed successfully to a Microsoft 365 test tenant on 
 - **Add to Teams** completed successfully, publishing the declarative agent package.
 - The app catalog reported version `1.0.0.0` as **Enabled**.
 
+<p align="center">
+  <img src="./assets/screenshots/sharepoint-app-catalog-deployed.png" alt="SharePoint App Catalog showing the ServiceNow Copilot UX package enabled and added to all sites" width="1200">
+</p>
+<p align="center"><sub>The deployed package is enabled, valid, available to SharePoint and Teams, and added to all sites.</sub></p>
+
 Tenant agent-catalog propagation is asynchronous and can take several minutes after **Add to Teams** completes.
+
+## Does this work with Copilot Studio?
+
+**Not directly.** This repository implements a native SPFx Copilot UX component for a Microsoft 365 Copilot declarative agent. Copilot Studio cannot import the `.sppkg`, host `BaseCopilotComponent`, or invoke this Copilot Component manifest as a native Copilot Studio agent UI.
+
+The same scenario can still be implemented in Copilot Studio by retaining the data and experience design while replacing the rendering and deployment layers:
+
+| This native Microsoft 365 Copilot sample | Copilot Studio equivalent |
+|---|---|
+| SPFx `BaseCopilotComponent` | MCP App embedded UI |
+| Copilot Component tool manifest | MCP server tool and UI resource |
+| SharePoint `.sppkg` | Hosted MCP server |
+| SharePoint App Catalog and **Add to Teams** | Copilot Studio MCP connection and agent publishing |
+| Native inline/fullscreen component | Embedded MCP App, Adaptive Card, or linked Power App |
+
+### What can be reused
+
+- ServiceNow-style record contract and field mapping
+- Copilot update sample data
+- KPI, filter, search, work-queue, and detail-view behavior
+- Agent prompts and change-intelligence instructions
+- Live ServiceNow connector or secured API response shape
+
+### What must be rebuilt
+
+- The SPFx rendering class and component manifest
+- The `.sppkg` packaging and SharePoint deployment flow
+- Host-specific inline/fullscreen integration
+
+For the closest Copilot Studio experience, use the
+[Copilot UX Powered by MCP Apps in Copilot Studio](https://github.com/ukpkumar/Copilot-UX-Powered-by-MCP-Apps-in-Copilot-Studio)
+implementation pattern. Adaptive Cards are a simpler native alternative but provide less dashboard interactivity; Power Apps can provide a rich interface but generally opens as a separate application experience.
 
 ## Important distinction
 
