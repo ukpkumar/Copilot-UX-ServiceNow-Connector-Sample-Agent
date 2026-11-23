@@ -22,7 +22,53 @@ These tenant test captures show portfolio filtering, record drill-down, and inli
 </p>
 <p align="center"><sub>Selecting a ticket and choosing <strong>Submit ticket to Copilot</strong> publishes the record as model context and starts a ticket-specific follow-up.</sub></p>
 
-## What this sample demonstrates
+## How to use this hands-on lab
+
+This repository is both a working sample and a guided lab. Complete the numbered labs in order if you want to build, test, package, and deploy the solution yourself.
+
+### Who this lab is for
+
+- Microsoft 365 and Copilot developers learning native Copilot UX components
+- SharePoint Framework developers adding a declarative agent to an SPFx solution
+- Solution architects comparing native Copilot UX with Copilot Studio and MCP Apps
+- Administrators validating App Catalog and tenant agent deployment
+
+### What you will complete
+
+By the end of the lab, you will have:
+
+1. A local SPFx 1.24.1 Copilot Component development environment.
+2. A ServiceNow-style change-intelligence UX running in Copilot Workbench.
+3. A declarative agent connected to `ServiceNowCopilotUpdatesTool`.
+4. A selected-ticket action that sends context back into the Copilot conversation.
+5. A production `.sppkg` containing both the component and the declarative agent.
+6. A tenant-wide SharePoint deployment ready for Microsoft 365 Copilot.
+
+### Lab roadmap
+
+| Lab | Purpose | Completion evidence |
+|---|---|---|
+| [Lab 0](#lab-0-understand-what-you-are-building) | Understand the scenario and architecture | You can explain the agent, tool, component, and data-provider roles |
+| [Lab 1](#lab-1-prepare-your-environment) | Prepare the development tenant and workstation | Required licenses, permissions, Node.js, and npm are available |
+| [Lab 2](#lab-2-get-the-code-and-understand-the-repository) | Clone the sample and understand every major folder | Dependencies install and you know which files to edit |
+| [Lab 3](#lab-3-run-the-component-in-copilot-workbench) | Run the component locally | The dashboard renders from the localhost debug manifest |
+| [Lab 4](#lab-4-validate-the-agent-experience) | Test filters, details, fullscreen, and ticket submission | Workbench logs model-context and follow-up bridge events |
+| [Lab 5](#lab-5-understand-and-customize-the-ticket-data) | Understand and modify the record contract | Modified sample data passes schema validation |
+| [Lab 6](#lab-6-build-the-component-agent-and-sharepoint-package) | Understand the source and generate production artifacts | The `.sppkg` and baseline agent ZIP are generated |
+| [Lab 7](#lab-7-deploy-to-sharepoint-and-microsoft-365-copilot) | Deploy the complete solution | App Catalog shows Enabled, Valid, and Added to all sites |
+| [Optional Lab A](#optional-lab-a-connect-live-servicenow-data) | Replace bundled records with connector data | Live data maps to the documented contract |
+| [Optional Lab B](#optional-lab-b-adapt-the-design-for-copilot-studio) | Reuse the design in Copilot Studio | You understand which rendering layer must change |
+
+> [!TIP]
+> If you only want to evaluate the finished sample, complete Labs 1–4 and then use the ready-made package from the GitHub release. Complete Labs 5–7 when you want to modify, rebuild, or deploy your own version.
+
+## Lab 0: understand what you are building
+
+### Lab objective
+
+Understand the responsibilities of the declarative agent, callable tool, SPFx component, and ServiceNow-style data contract before changing code.
+
+### What this sample demonstrates
 
 - SPFx `CopilotComponent` with `copilotType: "Ux"`
 - Declarative Microsoft 365 Copilot agent
@@ -39,7 +85,7 @@ These tenant test captures show portfolio filtering, record drill-down, and inli
 - Bundled sample data for immediate Workbench testing
 - Optional `records` property for future live connector results
 
-## Architecture
+### Architecture and request flow
 
 ```mermaid
 flowchart LR
@@ -62,17 +108,41 @@ The sample intentionally separates the **UX component** from the **data provider
 
 See [the connector contract](./docs/connector-contract.md) for field mapping.
 
-## Prerequisites
+### Lab 0 checkpoint
+
+Before continuing, confirm that you can identify:
+
+- the **declarative agent** as the conversational orchestrator;
+- `ServiceNowCopilotUpdatesTool` as the callable action;
+- the **SPFx Copilot Component** as the rendered native UI;
+- bundled JSON or a future connector as the data provider.
+
+## Lab 1: prepare your environment
+
+### Lab objective
+
+Prepare a supported workstation and Microsoft 365 tenant for local development, Workbench testing, packaging, and deployment.
+
+### Required tenant access
 
 - Microsoft 365 tenant with a SharePoint app catalog
 - Microsoft 365 Copilot license
 - Permission to upload and deploy `.sppkg` solutions
+
+### Required development tools
+
+- Git
 - SPFx 1.24.1 compatible Node.js:
   - Node 22.14 or later in the 22.x line
   - Node 24
   - Node 26
 - npm
 - Visual Studio Code or another editor
+- Yeoman and the SharePoint Framework generator when completing the from-scratch Track B:
+
+  ```powershell
+  npm install --global yo @microsoft/generator-sharepoint
+  ```
 
 Verify:
 
@@ -81,7 +151,20 @@ node --version
 npm --version
 ```
 
-## Install
+### Expected result
+
+- `node --version` reports a supported Node.js version.
+- `npm --version` completes successfully.
+- You can open the tenant SharePoint site and Copilot Workbench.
+- You have permission to deploy to the SharePoint App Catalog.
+
+## Lab 2: get the code and understand the repository
+
+### Lab objective
+
+Clone the working solution, install its dependencies, and understand what each repository folder contributes to the final Copilot agent package.
+
+### Step 1: clone and install
 
 ```powershell
 git clone https://github.com/ukpkumar/Copilot-UX-ServiceNow-Connector-Sample-Agent.git
@@ -89,9 +172,69 @@ Set-Location .\Copilot-UX-ServiceNow-Connector-Sample-Agent
 npm install
 ```
 
-## Test in Copilot Workbench
+### Step 2: understand the repository folders
 
-### 1. Start the local development server
+The folders visible on the GitHub repository page are not separate applications. They are parts of one SPFx solution assembled by the Heft build.
+
+<p align="center">
+  <img src="./assets/screenshots/repository-structure.png" alt="GitHub repository root showing the configuration, Copilot, source, samples, scripts, and generated-agent folders" width="1100">
+</p>
+<p align="center"><sub>Use this repository view as the map for the folder guide below.</sub></p>
+
+| Path | Meaning | When a lab user changes it |
+|---|---|---|
+| `.vscode/` | Visual Studio Code tasks and launch settings | Change only when customizing the editor/debug workflow |
+| `assets/screenshots/` | Images used by this lab guide | Add screenshots when documenting new test or deployment steps |
+| `config/` | SPFx, Copilot-agent linkage, serve, and package configuration | Change component mappings, package name, solution version, or build behavior |
+| `copilot/` | Declarative-agent source: app manifest, agent definition, plugin, instructions, and icons | Change the agent name, prompts, instructions, actions, identity, or branding |
+| `docs/` | Supporting technical documentation | Update when the connector contract or architecture changes |
+| `samples/` | Ready-to-use Workbench property payloads | Change when adding tool parameters or lab test scenarios |
+| `scripts/` | Repository validation utilities | Extend when adding custom validation or packaging checks |
+| `src/data/` | Bundled ServiceNow-style Copilot update records | Replace or edit when changing lab data |
+| `src/copilotComponents/` | TypeScript, SCSS, Zod schema, and component manifest for the native UX | This is the primary UI implementation folder |
+| `teams/` | Build-generated baseline declarative-agent ZIP | Do not hand-edit; regenerate with `npm run build` |
+| `sharepoint/solution/` | Build-generated `.sppkg` and diagnostic package contents | Upload the `.sppkg`; do not hand-edit generated files |
+| `package.json` | Dependencies and commands such as `start`, `build`, and `validate:sample` | Change when adding dependencies or scripts |
+| `package-lock.json` | Exact dependency versions | Regenerated by npm; commit it with dependency changes |
+| `tsconfig.json` | TypeScript compiler configuration | Change only for deliberate compiler-setting updates |
+
+### Step 3: open the project in your editor
+
+```powershell
+code .
+```
+
+Start with these files:
+
+1. `src/copilotComponents/serviceNowCopilotUpdates/ServiceNowCopilotUpdatesCopilotComponent.ts`
+2. `src/copilotComponents/serviceNowCopilotUpdates/ServiceNowCopilotUpdatesCopilotComponentProperties.ts`
+3. `src/copilotComponents/serviceNowCopilotUpdates/ServiceNowCopilotUpdatesCopilotComponent.manifest.json`
+4. `copilot/declarativeAgent.json`
+5. `copilot/instruction.txt`
+6. `config/copilot-agent.json`
+7. `config/package-solution.json`
+
+### Lab 2 checkpoint
+
+Run:
+
+```powershell
+npm run validate:sample
+```
+
+Expected output:
+
+```text
+Validated 12 ServiceNow-style Copilot update records.
+```
+
+## Lab 3: run the component in Copilot Workbench
+
+### Lab objective
+
+Serve the component from localhost and render it inside the tenant Copilot Workbench without deploying a package.
+
+### Step 1: start the local development server
 
 ```powershell
 npm run start -- --nobrowser
@@ -103,7 +246,17 @@ The debug manifests are served from:
 https://localhost:4321
 ```
 
-### 2. Open Copilot Workbench
+Expected terminal output includes:
+
+```text
+Started Webpack Dev Server at https://127.0.0.1:4321/
+webpack compiled successfully
+Waiting for changes.
+```
+
+Keep this terminal running for the rest of the Workbench labs.
+
+### Step 2: open Copilot Workbench
 
 Replace the tenant name and open the Workbench with the local debug manifest:
 
@@ -114,7 +267,7 @@ https://<tenant>.sharepoint.com/_layouts/15/copilotworkbench.aspx?debugManifests
 1. Select **Load debug scripts**.
 2. If the browser asks whether SharePoint can access apps and services on this device, select **Allow**. This permits the Workbench to reach the localhost development server.
 
-### 3. Activate the component
+### Step 3: activate the component
 
 1. Select **ServiceNowCopilotUpdates** from the component list.
 2. Paste the properties from [`samples/workbench-properties.json`](./samples/workbench-properties.json).
@@ -132,7 +285,27 @@ Example:
 }
 ```
 
-### 4. Validate the experience
+### Step 4: confirm the initial render
+
+Expected result:
+
+- the header shows **Copilot update change intelligence**;
+- metric cards and the work queue contain records;
+- the connector badge shows **ServiceNow Connector Sample**;
+- the browser console has no component compilation error.
+
+<p align="center">
+  <img src="./assets/screenshots/servicenow-copilot-ux-workbench.png" alt="Expected Copilot Workbench result after firing the ServiceNowCopilotUpdatesTool turn" width="1100">
+</p>
+<p align="center"><sub>Expected Lab 3 result: the native component is rendered from the localhost debug manifest.</sub></p>
+
+## Lab 4: validate the agent experience
+
+### Lab objective
+
+Exercise the interactive UX and verify that the component can send selected-ticket context into the Copilot conversation.
+
+### Step 1: test dashboard interactions
 
 Confirm:
 
@@ -140,16 +313,41 @@ Confirm:
 - product, status, time-window, and search filters work;
 - selecting a work-queue row opens the change details;
 - **Submit ticket to Copilot** sends the selected record into the conversation;
-- Copilot responds with the selected ticket number, facts, potential impact, and next steps;
 - source, Roadmap ID, priority, state, assignment, and modified date appear;
 - the Microsoft source link uses HTTP/HTTPS;
 - fullscreen mode opens from the header;
 - keyboard users can select rows with Enter or Space;
 - light and dark host themes remain readable.
 
-## Agent prompts
+### Step 2: test the selected-ticket bridge
 
-After deployment, try:
+1. Select any ticket row, for example `CHG00579968`.
+2. Confirm that the detail panel opens.
+3. Select **Submit ticket to Copilot**.
+4. Confirm the component displays:
+
+   ```text
+   CHG00579968 was submitted. Copilot is preparing a response in the conversation.
+   ```
+
+5. Open **View Log** in Workbench.
+6. Confirm the log contains:
+
+   ```text
+   Component state update
+   Follow-up message
+   ```
+
+Workbench validates the bridge operations. A deployed Microsoft 365 Copilot agent is required to validate the model-generated natural-language answer.
+
+<p align="center">
+  <img src="./assets/screenshots/servicenow-copilot-ticket-submit.png" alt="Expected selected-ticket submission state in Copilot Workbench" width="1100">
+</p>
+<p align="center"><sub>Expected Lab 4 result: the selected ticket is published to the Copilot bridge and the component reports successful submission.</sub></p>
+
+### Step 3: prepare the deployed-agent test prompts
+
+Save these prompts for Lab 7, when the declarative agent is deployed:
 
 ```text
 Show the Copilot update change portfolio for the last 30 days.
@@ -167,7 +365,20 @@ The declarative-agent instructions tell Copilot to pass period, product, and rol
 
 To ask about a specific ticket, select its work-queue row and choose **Submit ticket to Copilot**. The component publishes the selected record as model context and sends a user-triggered follow-up message. Copilot then explains that ticket in the existing conversation without requiring the user to copy its number or description manually.
 
-## ServiceNow-style data contract
+### Lab 4 checkpoint
+
+- Filters and search change the displayed records.
+- Row selection opens the correct ticket.
+- Fullscreen mode renders correctly.
+- Workbench records both model-context and follow-up bridge events.
+
+## Lab 5: understand and customize the ticket data
+
+### Lab objective
+
+Understand the connector contract, safely modify the bundled data, and validate changes before rebuilding the package.
+
+### Step 1: review the component input
 
 The component accepts:
 
@@ -204,13 +415,35 @@ Each record contains:
 
 The bundled dataset contains real Copilot update examples mapped to this contract. It is not presented as data retrieved from a live ServiceNow tenant.
 
-Validate the sample contract:
+### Step 2: modify a lab record
+
+Open:
+
+```text
+src/data/copilotUpdates.sample.json
+```
+
+Change a non-identifier field such as `assignedTo` or add a new record containing every required property. Keep `sysId` and `number` unique.
+
+### Step 3: validate the sample contract
 
 ```powershell
 npm run validate:sample
 ```
 
-## Connect live ServiceNow data later
+Do not continue until validation succeeds. A schema failure identifies the record and invalid field that must be corrected.
+
+### Lab 5 checkpoint
+
+- Your edited data passes `npm run validate:sample`.
+- The edited record appears in Workbench after the development server rebuilds.
+- Filtering and ticket submission still work with the edited record.
+
+## Optional Lab A: connect live ServiceNow data
+
+### Lab objective
+
+Replace bundled records with authorized live data without redesigning the Copilot UX component.
 
 To replace bundled data:
 
@@ -222,13 +455,26 @@ To replace bundled data:
 
 The component requires no redesign when the provider changes because the record contract remains stable.
 
-## Build from code: Copilot UX component, declarative agent, and SharePoint package
+## Lab 6: build the component, agent, and SharePoint package
+
+### Lab objective
+
+Trace how the source files are connected, then generate the production declarative-agent package and SharePoint `.sppkg`.
 
 This section follows the same code-first model as Microsoft’s
 [Build your first Copilot UX component](https://learn.microsoft.com/sharepoint/dev/spfx/copilot/get-started/build-your-first-copilot-app)
 tutorial. It explains how the source becomes both a declarative agent and a deployable SharePoint `.sppkg`.
 
-### Path A: clone and build this completed sample
+### Track A: build this completed sample
+
+If you completed Labs 1–5, you are already in the repository and can run:
+
+```powershell
+npm run validate:sample
+npm run build
+```
+
+For a standalone build without completing the earlier labs:
 
 ```powershell
 git clone https://github.com/ukpkumar/Copilot-UX-ServiceNow-Connector-Sample-Agent.git
@@ -246,7 +492,9 @@ sharepoint/solution/service-now-copilot-updates-ux.sppkg
 
 Use the following steps to understand or recreate the implementation.
 
-### Path B: scaffold a new Copilot Component project
+### Track B: scaffold and recreate the solution
+
+Use Track B when the learning goal is to reproduce the project from an empty folder rather than modify the completed sample.
 
 Create a folder and run the SPFx generator:
 
@@ -544,13 +792,27 @@ gh release create v0.2.0 `
   --title "v0.2.0 - Selected ticket follow-up"
 ```
 
-## Deploy as a Microsoft 365 Copilot agent
+### Lab 6 checkpoint
+
+Confirm that:
+
+- the production build finishes without TypeScript, lint, or package-validation errors;
+- `sharepoint/solution/service-now-copilot-updates-ux.sppkg` exists;
+- the `.sppkg` version matches `config/package-solution.json`;
+- `teams/servicenow-copilot-change-intelligence.zip` was regenerated;
+- bundled data still passes `npm run validate:sample`.
+
+## Lab 7: deploy to SharePoint and Microsoft 365 Copilot
+
+### Lab objective
+
+Upload the combined package, enable it tenant-wide, synchronize the declarative agent, and invoke the native UX from Microsoft 365 Copilot.
 
 Download the ready-to-deploy package from the
 [v0.2.0 release](https://github.com/ukpkumar/Copilot-UX-ServiceNow-Connector-Sample-Agent/releases/tag/v0.2.0),
 or build it locally using the command above.
 
-### 1. Deploy through the SharePoint app catalog
+### Step 1: deploy through the SharePoint App Catalog
 
 1. Open the tenant SharePoint app catalog.
 2. Open **Apps for SharePoint**.
@@ -560,9 +822,13 @@ or build it locally using the command above.
 6. Select the uploaded application.
 7. Select **Add to Teams**.
 
-**Add to Teams** deploys the baseline declarative agent to the tenant agent catalog. The Copilot UX component assets remain hosted by SharePoint. If the tenant does not have an app catalog yet, a SharePoint administrator must create it before uploading the package.
+### Step 2: wait for agent-catalog propagation
 
-### 2. Add the agent in Microsoft 365 Copilot
+**Add to Teams** deploys the baseline declarative agent to the tenant agent catalog. The Copilot UX component assets remain hosted by SharePoint.
+
+Propagation is asynchronous. Wait several minutes before searching for the agent. If the tenant does not have an App Catalog yet, a SharePoint administrator must provision it before the package can be uploaded.
+
+### Step 3: add the agent in Microsoft 365 Copilot
 
 After tenant propagation:
 
@@ -574,7 +840,31 @@ After tenant propagation:
 
 The first tool invocation may request permission. Select **Allow** so the agent can render `ServiceNowCopilotUpdatesTool`.
 
-### Verified deployment
+### Step 4: validate the deployed experience
+
+1. Submit:
+
+   ```text
+   Show the Copilot update change portfolio for the last 30 days.
+   ```
+
+2. Select a ticket in the rendered component.
+3. Select **Submit ticket to Copilot**.
+4. Confirm Copilot answers using the exact ticket number and supplied ticket facts.
+5. Expand the component to fullscreen and confirm the layout remains usable.
+
+### Expected deployment state
+
+The SharePoint App Catalog row should show:
+
+| Column | Expected value |
+|---|---|
+| App version | `1.1.0.0` |
+| State | `Enabled` |
+| Added to all sites | `Yes` |
+| Valid app package | `Yes` |
+
+### Validated lab result
 
 The clean-install flow was validated in a Microsoft 365 test tenant on November 23, 2026:
 
@@ -593,7 +883,18 @@ The latest SharePoint package, version `1.1.0.0`, contains the selected-ticket *
 
 Tenant agent-catalog propagation is asynchronous and can take several minutes after **Add to Teams** completes.
 
-## Does this work with Copilot Studio?
+### Lab 7 checkpoint
+
+- The App Catalog reports the expected deployment state.
+- The agent is available in Microsoft 365 Copilot.
+- A prompt invokes `ServiceNowCopilotUpdatesTool`.
+- The selected-ticket action results in a contextual Copilot answer.
+
+## Optional Lab B: adapt the design for Copilot Studio
+
+### Lab objective
+
+Understand which parts of this lab can be reused in Copilot Studio and which native SPFx host integration must be replaced.
 
 **Not directly.** This repository implements a native SPFx Copilot UX component for a Microsoft 365 Copilot declarative agent. Copilot Studio cannot import the `.sppkg`, host `BaseCopilotComponent`, or invoke this Copilot Component manifest as a native Copilot Studio agent UI.
 
@@ -625,7 +926,7 @@ For the closest Copilot Studio experience, use the
 [Copilot UX Powered by MCP Apps in Copilot Studio](https://github.com/ukpkumar/Copilot-UX-Powered-by-MCP-Apps-in-Copilot-Studio)
 implementation pattern. Adaptive Cards are a simpler native alternative but provide less dashboard interactivity; Power Apps can provide a rich interface but generally opens as a separate application experience.
 
-## Important distinction
+## Architecture reference: native Copilot UX versus MCP Apps
 
 This is a **native SPFx Copilot UX component**:
 
@@ -676,7 +977,7 @@ f4a0565e-9327-4609-99db-fc70f77af3b6
 
 Check **Teams admin center** > **Teams apps** > **Manage apps** only when an existing-tenant update returns a policy error. A new tenant installation normally follows the standard deployment steps without this upgrade-specific cleanup.
 
-## Project structure
+## Appendix A: repository tree
 
 ```text
 copilot/
@@ -708,7 +1009,7 @@ teams/
   servicenow-copilot-change-intelligence.zip
 ```
 
-## References
+## Appendix B: references
 
 - [Build your first Copilot UX component](https://learn.microsoft.com/sharepoint/dev/spfx/copilot/get-started/build-your-first-copilot-app)
 - [Overview of Copilot UX components](https://learn.microsoft.com/sharepoint/dev/spfx/copilot/overview-copilot-apps)
