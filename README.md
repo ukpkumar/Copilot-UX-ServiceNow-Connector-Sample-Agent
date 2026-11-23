@@ -222,99 +222,321 @@ To replace bundled data:
 
 The component requires no redesign when the provider changes because the record contract remains stable.
 
-## Optional: build and package from source
+## Build from code: Copilot UX component, declarative agent, and SharePoint package
 
-The GitHub release contains a ready-to-deploy `.sppkg`, so building from source is optional. Use this section when you want to modify the component, agent instructions, data contract, branding, or package metadata.
+This section follows the same code-first model as Microsoft’s
+[Build your first Copilot UX component](https://learn.microsoft.com/sharepoint/dev/spfx/copilot/get-started/build-your-first-copilot-app)
+tutorial. It explains how the source becomes both a declarative agent and a deployable SharePoint `.sppkg`.
 
-### 1. Install the source dependencies
+### Path A: clone and build this completed sample
 
 ```powershell
 git clone https://github.com/ukpkumar/Copilot-UX-ServiceNow-Connector-Sample-Agent.git
 Set-Location .\Copilot-UX-ServiceNow-Connector-Sample-Agent
 npm install
+npm run validate:sample
+npm run build
 ```
 
-The project uses the SPFx 1.24.1 toolchain, TypeScript, SCSS, Zod, Heft, and the `@microsoft/sp-copilot-component` package.
+The finished package is written to:
 
-### 2. Validate the bundled records
+```text
+sharepoint/solution/service-now-copilot-updates-ux.sppkg
+```
+
+Use the following steps to understand or recreate the implementation.
+
+### Path B: scaffold a new Copilot Component project
+
+Create a folder and run the SPFx generator:
 
 ```powershell
+New-Item -ItemType Directory service-now-copilot-updates-ux
+Set-Location .\service-now-copilot-updates-ux
+yo @microsoft/sharepoint
+```
+
+Choose:
+
+| Generator prompt | Value |
+|---|---|
+| Solution name | `service-now-copilot-updates-ux` |
+| Client-side component type | **Copilot Component** |
+| Component name | `ServiceNowCopilotUpdates` |
+| Template | **No framework** |
+
+The generator creates the SPFx build configuration, `src/copilotComponents/`, `copilot/`, `config/copilot-agent.json`, and the SharePoint packaging files.
+
+### Step 1: define the tool properties with Zod
+
+Open:
+
+```text
+src/copilotComponents/serviceNowCopilotUpdates/
+  ServiceNowCopilotUpdatesCopilotComponentProperties.ts
+```
+
+Define the parameters Copilot can pass into the component:
+
+```typescript
+const propertiesSchema = z.object({
+  title: z.string().optional(),
+  timeWindowDays: z.number().int().positive().max(365).optional(),
+  product: z.string().optional(),
+  status: z.string().optional(),
+  connectorName: z.string().optional(),
+  records: z.array(serviceNowUpdateRecordSchema).max(100).optional()
+});
+
+export default z.toJSONSchema(propertiesSchema, { target: "draft-7" });
+```
+
+This schema becomes the input definition for `ServiceNowCopilotUpdatesTool`. The model uses the property descriptions to supply the initial period, product, status, connector name, and records.
+
+### Step 2: implement the Copilot UX component
+
+Open:
+
+```text
+src/copilotComponents/serviceNowCopilotUpdates/
+  ServiceNowCopilotUpdatesCopilotComponent.ts
+```
+
+The component must extend `BaseCopilotComponent` and render into the host DOM:
+
+```typescript
+import {
+  BaseCopilotComponent,
+  createCopilotTextContent
+} from "@microsoft/sp-copilot-component";
+
+export default class ServiceNowCopilotUpdatesCopilotComponent
+  extends BaseCopilotComponent<IServiceNowCopilotUpdatesCopilotComponentProperties> {
+
+  protected render(): void {
+    const isDarkTheme = this.hostContext.theme === "dark";
+    const isFullscreen = this.hostContext.displayMode === "fullscreen";
+
+    this.context.domElement.innerHTML = `<!-- component UI -->`;
+    this._bindEvents();
+  }
+}
+```
+
+The implementation in this repository additionally:
+
+1. Loads bundled records or accepts `records` from a future connector.
+2. Applies time, product, rollout-status, and search filters.
+3. Renders KPIs, the work queue, and selected-record details.
+4. Calls `requestDisplayModeAsync("fullscreen")` for the expand action.
+5. Publishes a selected ticket with `updateModelContextAsync`.
+6. Calls `sendFollowUpMessageAsync` when the user selects **Submit ticket to Copilot**.
+
+The ticket follow-up uses the supported bridge APIs:
+
+```typescript
+await this.context.copilotBridge.updateModelContextAsync({
+  content: [createCopilotTextContent(ticketContext)],
+  structuredContent: { selectedTicket: record }
+});
+
+await this.context.copilotBridge.sendFollowUpMessageAsync([
+  createCopilotTextContent(`Tell me more about ticket ${record.number}.`)
+]);
+```
+
+### Step 3: declare the component and its callable tool
+
+Open:
+
+```text
+src/copilotComponents/serviceNowCopilotUpdates/
+  ServiceNowCopilotUpdatesCopilotComponent.manifest.json
+```
+
+The key declarations are:
+
+```json
+{
+  "componentType": "CopilotComponent",
+  "copilotType": "Ux",
+  "capabilities": {
+    "availableDisplayModes": ["inline", "fullscreen"]
+  },
+  "tools": [
+    {
+      "name": "ServiceNowCopilotUpdatesTool",
+      "propertiesSchema": {
+        "id": "$../../../lib/copilotComponents/serviceNowCopilotUpdates/ServiceNowCopilotUpdatesCopilotComponentProperties.js:default;"
+      }
+    }
+  ]
+}
+```
+
+`componentType` and `copilotType` tell SPFx that this is a native Copilot UX component. The tool name is what the declarative agent invokes.
+
+### Step 4: define the declarative agent
+
+The `copilot/` folder is the source for the agent packaged with the component:
+
+| File | Purpose |
+|---|---|
+| `manifest.json` | Microsoft 365/Teams app identity, icons, name, permissions, and declarative-agent registration |
+| `declarativeAgent.json` | Agent name, description, instructions, conversation starters, and actions |
+| `ai-plugin.json` | Model-facing action metadata |
+| `instruction.txt` | Behavior for choosing the tool and answering ticket follow-ups |
+| `color.png`, `outline.png` | Agent icons |
+
+The declarative-agent action points to the plugin:
+
+```json
+{
+  "version": "v1.8",
+  "name": "ServiceNow Copilot Change Intelligence",
+  "instructions": "$[file('instruction.txt')]",
+  "actions": [
+    {
+      "id": "serviceNowCopilotUpdatesAction",
+      "file": "ai-plugin.json"
+    }
+  ]
+}
+```
+
+The instructions tell the model when to call `ServiceNowCopilotUpdatesTool`, how to map the requested filters, and how to explain a ticket submitted from the component.
+
+### Step 5: connect the agent to the component
+
+Open:
+
+```text
+config/copilot-agent.json
+```
+
+Add the component manifest ID to the agent:
+
+```json
+{
+  "agents": [
+    {
+      "name": {
+        "default": "ServiceNow Copilot Change Intelligence"
+      },
+      "components": [
+        "e0a17631-57aa-4824-b1b4-d4fbe833e99a"
+      ]
+    }
+  ]
+}
+```
+
+The GUID must match the `id` in `ServiceNowCopilotUpdatesCopilotComponent.manifest.json`. This is the build-time link between the declarative agent and the native UI tool.
+
+### Step 6: configure the SharePoint solution
+
+Open:
+
+```text
+config/package-solution.json
+```
+
+Important values:
+
+```json
+{
+  "solution": {
+    "name": "service-now-copilot-updates-ux-client-side-solution",
+    "version": "1.1.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true
+  },
+  "paths": {
+    "zippedPackage": "solution/service-now-copilot-updates-ux.sppkg"
+  }
+}
+```
+
+`includeClientSideAssets: true` places the compiled component and agent assets inside the `.sppkg`. `skipFeatureDeployment: true` supports tenant-wide deployment when **Enable this app and add it to all sites** is selected.
+
+### Step 7: install and validate the code
+
+```powershell
+npm install
 npm run validate:sample
 ```
 
-This validates every bundled record against the same ServiceNow-style schema used by the component.
+The validation script checks the bundled JSON against the same Zod record contract used at runtime.
 
-### 3. Run and test the source locally
+### Step 8: test in Copilot Workbench
 
 ```powershell
 npm run start -- --nobrowser
 ```
 
-This runs `heft start --clean`, serves the debug manifest from `https://localhost:4321`, and watches TypeScript and SCSS for changes. Load that manifest in Copilot Workbench using the instructions above.
+This runs `heft start --clean`, serves the debug manifest from `https://localhost:4321`, and watches TypeScript and SCSS. Follow the [Test in Copilot Workbench](#test-in-copilot-workbench) steps to load the component, pass tool properties, select a ticket, and test the follow-up bridge.
 
-### 4. Generate the production packages
+### Step 9: generate the declarative agent and `.sppkg`
+
+The repository build script is:
+
+```json
+{
+  "scripts": {
+    "build": "heft test --clean --production && heft package-solution --production"
+  }
+}
+```
+
+Run:
 
 ```powershell
 npm run build
 ```
 
-The `build` script runs:
+The build performs:
 
-```text
-heft test --clean --production
-heft package-solution --production
-```
-
-| Build stage | What it does |
+| Build stage | Result |
 |---|---|
-| Clean and compile | Removes previous output, compiles SCSS and TypeScript, and runs lint checks |
-| Webpack production bundle | Produces the optimized Copilot component JavaScript |
-| Copilot agent expansion | Combines `copilot/`, `config/copilot-agent.json`, the component manifest, tools, and Zod properties |
-| Test phase | Runs the repository test task and reports failures |
-| Package solution | Validates the app package and creates the SharePoint solution |
-
-### Generated artifacts
-
-| Artifact | Purpose |
-|---|---|
-| `sharepoint/solution/service-now-copilot-updates-ux.sppkg` | Deployable SharePoint package containing the component assets and declarative-agent package |
-| `teams/servicenow-copilot-change-intelligence.zip` | Intermediate baseline-agent package generated for SharePoint synchronization |
-| `sharepoint/solution/debug/` | Expanded SharePoint package contents useful for build diagnostics |
-| `temp/copilot/` | Merged declarative-agent output generated during the build |
-
-`config/package-solution.json` sets `includeClientSideAssets` to `true`, so the compiled JavaScript, styles, component definition, and agent package are included in the `.sppkg`. SharePoint hosts those assets automatically after deployment.
+| Clean, SCSS, TypeScript, lint | Validates and compiles the source |
+| Production Webpack bundle | Generates optimized component JavaScript |
+| Copilot agent expansion | Merges `copilot/`, `config/copilot-agent.json`, component tools, and the Zod schema |
+| Agent package generation | Creates the baseline Microsoft 365 agent ZIP |
+| SharePoint packaging | Embeds the agent ZIP and component assets in the `.sppkg` |
 
 ```mermaid
 flowchart LR
-    S[TypeScript, SCSS, manifests, instructions] --> H[Heft production build]
-    H --> C[Compiled Copilot UX component]
-    H --> A[Expanded declarative agent]
-    C --> P[SharePoint solution package]
-    A --> Z[Generated baseline agent ZIP]
+    C[Component TypeScript and SCSS] --> H[Heft production build]
+    M[Component manifest and Zod schema] --> H
+    A[Declarative agent source] --> H
+    H --> J[Compiled component assets]
+    H --> Z[Expanded baseline agent ZIP]
+    J --> P[SharePoint package-solution]
     Z --> P
-    P --> O[service-now-copilot-updates-ux.sppkg]
+    P --> S[service-now-copilot-updates-ux.sppkg]
 ```
 
+### Step 10: review the generated files
+
+| Artifact | Purpose |
+|---|---|
+| `sharepoint/solution/service-now-copilot-updates-ux.sppkg` | Final package uploaded to SharePoint App Catalog |
+| `teams/servicenow-copilot-change-intelligence.zip` | Intermediate baseline-agent package embedded in the `.sppkg` |
+| `sharepoint/solution/debug/` | Expanded SharePoint package contents for diagnostics |
+| `temp/copilot/` | Merged declarative-agent output generated by the build |
+
 > [!IMPORTANT]
-> Do not manually upload `teams/servicenow-copilot-change-intelligence.zip` to Teams admin center. Before SharePoint synchronization, that intermediate package contains the `{{TENANT_MCP_URL}}` placeholder. Upload the `.sppkg` to SharePoint and use **Add to Teams** so SharePoint supplies the tenant-specific runtime URL.
+> Do not manually upload the generated `teams/*.zip` to Teams admin center. Before SharePoint synchronization, it contains the `{{TENANT_MCP_URL}}` placeholder. Upload the `.sppkg` to SharePoint and select **Add to Teams** so SharePoint supplies the tenant-specific runtime URL.
 
-### Versioning an update
-
-Three versions serve different purposes:
+### Step 11: version and optionally publish the package
 
 | Location | Current value | Purpose |
 |---|---:|---|
 | `package.json` | `0.2.0` | Source/release version |
 | `config/package-solution.json` | `1.1.0.0` | Version displayed and compared by SharePoint App Catalog |
-| `copilot/manifest.json` | Microsoft 365 app version | Baseline agent package version |
+| `copilot/manifest.json` | `1.0.0` source version | Baseline Microsoft 365 app version |
 
-Increase the SharePoint solution version before distributing an update. Upload upgrades using the exact original filename, `service-now-copilot-updates-ux.sppkg`, and select **Replace** when prompted.
-
-If only component code changes, redeploying the `.sppkg` is sufficient. If the agent name, icons, instructions, conversation starters, or other baseline configuration changes, run **Add to Teams** again after deployment.
-
-### Optional: publish a GitHub release
-
-With GitHub CLI installed and authenticated:
+For a GitHub release:
 
 ```powershell
 gh release create v0.2.0 `
@@ -354,14 +576,15 @@ The first tool invocation may request permission. Select **Allow** so the agent 
 
 ### Verified deployment
 
-The packages were tested in a Microsoft 365 test tenant on November 23, 2026:
+The clean-install flow was validated in a Microsoft 365 test tenant on November 23, 2026:
 
-| Package | SharePoint result | Agent synchronization |
-|---|---|---|
-| `v0.1.0` / solution `1.0.0.0` | Enabled, valid, and added to all sites | **Add to Teams** completed successfully |
-| `v0.2.0` / solution `1.1.0.0` | Enabled, valid, and added to all sites | Blocked by the tenant's Teams app policy |
+- SharePoint accepted the package as a valid custom app.
+- The solution was enabled tenant-wide and added to all sites.
+- **Add to Teams** completed successfully for the initial agent deployment.
+- The component rendered in Copilot Workbench in inline and fullscreen modes.
+- The selected-ticket bridge published model context and emitted a follow-up message.
 
-The latest SharePoint deployment is complete. Version `1.1.0.0` contains the selected-ticket **Submit ticket to Copilot** interaction and updated agent instructions.
+The latest SharePoint package, version `1.1.0.0`, contains the selected-ticket **Submit ticket to Copilot** interaction and updated agent instructions.
 
 <p align="center">
   <img src="./assets/screenshots/sharepoint-app-catalog-deployed.png" alt="SharePoint App Catalog showing the ServiceNow Copilot UX package enabled and added to all sites" width="1200">
@@ -369,29 +592,6 @@ The latest SharePoint deployment is complete. Version `1.1.0.0` contains the sel
 <p align="center"><sub>Version 1.1.0.0 is enabled, valid, and added to all SharePoint sites.</sub></p>
 
 Tenant agent-catalog propagation is asynchronous and can take several minutes after **Add to Teams** completes.
-
-### Teams policy troubleshooting
-
-The latest synchronization attempt returned:
-
-```text
-This app couldn't be added to Teams because it's blocked in the Teams admin center.
-```
-
-This does not roll back the SharePoint deployment. It means the updated baseline agent cannot be synchronized to the tenant agent catalog until a Teams administrator unblocks the app.
-
-1. Open **Teams admin center**.
-2. Go to **Teams apps** > **Manage apps**.
-3. Locate or open app ID:
-
-   ```text
-   f4a0565e-9327-4609-99db-fc70f77af3b6
-   ```
-
-4. Ensure the app is unblocked and available to the intended users.
-5. Return to the SharePoint App Catalog, select the solution, and run **Add to Teams** again.
-
-The tenant's org-wide custom-app settings were enabled during testing. The remaining limitation is the app-specific Teams catalog block.
 
 ## Does this work with Copilot Studio?
 
@@ -438,6 +638,43 @@ This is a **native SPFx Copilot UX component**:
 | SharePoint `.sppkg` | Container deployment |
 | SharePoint app catalog | Azure Container Apps |
 | Microsoft 365 identity | API-key/OAuth MCP connection |
+
+## Operational awareness: upgrades and existing tenants
+
+This section is not part of the normal fresh-build path. It applies when an earlier version of the same app ID already exists in SharePoint or the Teams app catalog.
+
+### Updating an existing SharePoint package
+
+1. Increase `solution.version` in `config/package-solution.json`.
+2. Run `npm run build`.
+3. Upload the package using the exact original filename:
+
+   ```text
+   service-now-copilot-updates-ux.sppkg
+   ```
+
+4. Select **Replace** when SharePoint reports that the file already exists.
+5. Keep **Enable this app and add it to all sites** selected.
+
+If only component JavaScript or styling changed, redeploying the `.sppkg` is sufficient. If the agent name, icons, instructions, conversation starters, or other baseline agent configuration changed, select **Add to Teams** again.
+
+### Existing Teams policy state
+
+An existing app can be blocked independently in Teams admin center. During an update test—not the clean installation—the tenant returned:
+
+```text
+This app couldn't be added to Teams because it's blocked in the Teams admin center.
+```
+
+This does not invalidate or roll back the SharePoint package. A Teams administrator must unblock the existing app record and then retry **Add to Teams**.
+
+For this sample, the Microsoft 365 app ID is:
+
+```text
+f4a0565e-9327-4609-99db-fc70f77af3b6
+```
+
+Check **Teams admin center** > **Teams apps** > **Manage apps** only when an existing-tenant update returns a policy error. A new tenant installation normally follows the standard deployment steps without this upgrade-specific cleanup.
 
 ## Project structure
 
