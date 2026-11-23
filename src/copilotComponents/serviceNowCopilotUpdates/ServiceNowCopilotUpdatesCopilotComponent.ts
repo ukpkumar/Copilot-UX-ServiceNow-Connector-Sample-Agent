@@ -1,4 +1,7 @@
-import { BaseCopilotComponent } from '@microsoft/sp-copilot-component';
+import {
+  BaseCopilotComponent,
+  createCopilotTextContent
+} from '@microsoft/sp-copilot-component';
 import { escape } from '@microsoft/sp-lodash-subset';
 
 import sampleUpdates from '../../data/copilotUpdates.sample.json';
@@ -23,6 +26,8 @@ interface IStatusCount {
   count: number;
 }
 
+type FollowUpState = 'idle' | 'sending' | 'sent' | 'error';
+
 export default class ServiceNowCopilotUpdatesCopilotComponent extends BaseCopilotComponent<IServiceNowCopilotUpdatesCopilotComponentProperties> {
   private _productFilter: string = ALL;
   private _statusFilter: string = ALL;
@@ -30,6 +35,7 @@ export default class ServiceNowCopilotUpdatesCopilotComponent extends BaseCopilo
   private _searchText: string = '';
   private _selectedSysId: string | undefined;
   private _filtersInitialized: boolean = false;
+  private _followUpState: FollowUpState = 'idle';
 
   protected render(): void {
     this._initializeState();
@@ -171,7 +177,9 @@ export default class ServiceNowCopilotUpdatesCopilotComponent extends BaseCopilo
 
   private _initializeState(): void {
     if (this._filtersInitialized) return;
-    this._timeWindowDays = this.properties.timeWindowDays ?? DEFAULT_WINDOW_DAYS;
+    this._timeWindowDays = this.properties.timeWindowDays && this.properties.timeWindowDays > 0
+      ? this.properties.timeWindowDays
+      : DEFAULT_WINDOW_DAYS;
     this._productFilter = this.properties.product || ALL;
     this._statusFilter = this.properties.status || ALL;
     this._filtersInitialized = true;
@@ -244,13 +252,20 @@ export default class ServiceNowCopilotUpdatesCopilotComponent extends BaseCopilo
 
   private _renderDetails(record: IServiceNowUpdateRecord): string {
     const safeUrl: string | undefined = this._getSafeUrl(record.sourceUrl);
+    const isSending: boolean = this._followUpState === 'sending';
+    const followUpStatus: string = this._getFollowUpStatus(record.number);
     return `<section class="${styles.details}" aria-label="Selected change details">
       <div class="${styles.detailsHeader}">
         <div>
           <span class="${styles.sectionLabel}">${escape(record.number)} · ${escape(record.sysId)}</span>
           <h2>${escape(record.shortDescription)}</h2>
         </div>
-        ${safeUrl ? `<a class="${styles.primaryButton}" href="${escape(safeUrl)}" target="_blank" rel="noopener noreferrer">Open Microsoft source</a>` : ''}
+        <div class="${styles.detailsActions}">
+          ${safeUrl ? `<a class="${styles.secondaryButton}" href="${escape(safeUrl)}" target="_blank" rel="noopener noreferrer">Open Microsoft source</a>` : ''}
+          <button id="sn-submit-copilot" class="${styles.primaryButton}" type="button" ${isSending ? 'disabled' : ''}>
+            ${isSending ? 'Sending…' : 'Submit ticket to Copilot'}
+          </button>
+        </div>
       </div>
       <div class="${styles.detailGrid}">
         ${this._renderDetailField('Product', record.product)}
@@ -263,6 +278,7 @@ export default class ServiceNowCopilotUpdatesCopilotComponent extends BaseCopilo
         ${this._renderDetailField('Modified', record.modifiedOn)}
       </div>
       <p class="${styles.description}">${escape(record.description)}</p>
+      ${followUpStatus ? `<p id="sn-follow-up-status" class="${styles.followUpStatus} ${this._followUpState === 'error' ? styles.followUpError : ''}" role="status" aria-live="polite">${escape(followUpStatus)}</p>` : ''}
     </section>`;
   }
 
@@ -280,6 +296,69 @@ export default class ServiceNowCopilotUpdatesCopilotComponent extends BaseCopilo
     }
   }
 
+  private _getFollowUpStatus(ticketNumber: string): string {
+    switch (this._followUpState) {
+      case 'sending':
+        return `Sending ${ticketNumber} to Copilot…`;
+      case 'sent':
+        return `${ticketNumber} was submitted. Copilot is preparing a response in the conversation.`;
+      case 'error':
+        return `Copilot could not accept ${ticketNumber}. Try submitting the ticket again.`;
+      default:
+        return '';
+    }
+  }
+
+  private _resetFollowUpState(): void {
+    this._followUpState = 'idle';
+  }
+
+  private _buildTicketContext(record: IServiceNowUpdateRecord): string {
+    return [
+      `Selected ServiceNow-style change ticket: ${record.number}`,
+      `System ID: ${record.sysId}`,
+      `Short description: ${record.shortDescription}`,
+      `Description: ${record.description}`,
+      `Product: ${record.product}`,
+      `Rollout status: ${record.status}`,
+      `Priority: P${record.priority}`,
+      `State: ${record.state}`,
+      `Assigned to: ${record.assignedTo}`,
+      `Source: ${record.source}`,
+      `Modified: ${record.modifiedOn}`,
+      `Roadmap ID: ${record.roadmapId || 'Not provided'}`,
+      `Source URL: ${record.sourceUrl || 'Not provided'}`
+    ].join('\n');
+  }
+
+  private async _submitTicketToCopilot(record: IServiceNowUpdateRecord): Promise<void> {
+    this._followUpState = 'sending';
+    this.render();
+
+    const ticketContext: string = this._buildTicketContext(record);
+
+    try {
+      await this.context.copilotBridge.updateModelContextAsync({
+        content: [createCopilotTextContent(ticketContext)],
+        structuredContent: {
+          selectedTicket: record
+        }
+      });
+
+      const result = await this.context.copilotBridge.sendFollowUpMessageAsync([
+        createCopilotTextContent(
+          `Tell me more about ticket ${record.number}. Explain its purpose, current rollout status, priority, ownership, potential impact, and recommended next steps using the selected ticket context. Do not invent missing details.`
+        )
+      ]);
+
+      this._followUpState = result.isError ? 'error' : 'sent';
+    } catch {
+      this._followUpState = 'error';
+    }
+
+    this.render();
+  }
+
   private _bindEvents(): void {
     const expandButton: HTMLButtonElement | null = this.context.domElement.querySelector('#sn-expand');
     expandButton?.addEventListener('click', () => {
@@ -290,6 +369,7 @@ export default class ServiceNowCopilotUpdatesCopilotComponent extends BaseCopilo
     windowSelect?.addEventListener('change', () => {
       this._timeWindowDays = Number(windowSelect.value);
       this._selectedSysId = undefined;
+      this._resetFollowUpState();
       this.render();
     });
 
@@ -297,6 +377,7 @@ export default class ServiceNowCopilotUpdatesCopilotComponent extends BaseCopilo
     productSelect?.addEventListener('change', () => {
       this._productFilter = productSelect.value;
       this._selectedSysId = undefined;
+      this._resetFollowUpState();
       this.render();
     });
 
@@ -304,6 +385,7 @@ export default class ServiceNowCopilotUpdatesCopilotComponent extends BaseCopilo
     statusSelect?.addEventListener('change', () => {
       this._statusFilter = statusSelect.value;
       this._selectedSysId = undefined;
+      this._resetFollowUpState();
       this.render();
     });
 
@@ -311,6 +393,7 @@ export default class ServiceNowCopilotUpdatesCopilotComponent extends BaseCopilo
     searchInput?.addEventListener('input', () => {
       this._searchText = searchInput.value;
       this._selectedSysId = undefined;
+      this._resetFollowUpState();
       this.render();
     });
 
@@ -321,12 +404,14 @@ export default class ServiceNowCopilotUpdatesCopilotComponent extends BaseCopilo
       this._searchText = '';
       this._timeWindowDays = DEFAULT_WINDOW_DAYS;
       this._selectedSysId = undefined;
+      this._resetFollowUpState();
       this.render();
     });
 
     this.context.domElement.querySelectorAll<HTMLTableRowElement>('tr[data-sys-id]').forEach((row: HTMLTableRowElement) => {
       const selectRow = (): void => {
         this._selectedSysId = row.dataset.sysId;
+        this._resetFollowUpState();
         this.render();
       };
       row.addEventListener('click', selectRow);
@@ -337,5 +422,17 @@ export default class ServiceNowCopilotUpdatesCopilotComponent extends BaseCopilo
         }
       });
     });
+
+    const submitButton: HTMLButtonElement | null = this.context.domElement.querySelector('#sn-submit-copilot');
+    const selectedRecord: IServiceNowUpdateRecord | undefined = this._getRecords()
+      .find((record: IServiceNowUpdateRecord) => record.sysId === this._selectedSysId);
+    if (submitButton && selectedRecord) {
+      submitButton.addEventListener('click', () => {
+        this._submitTicketToCopilot(selectedRecord).catch(() => {
+          this._followUpState = 'error';
+          this.render();
+        });
+      });
+    }
   }
 }

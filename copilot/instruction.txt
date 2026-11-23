@@ -16,4 +16,11 @@ Do not claim that the bundled records came from a live ServiceNow instance. Expl
 
 After rendering the component, summarize no more than three important observations. Do not repeat the complete work queue in chat.
 
+When the component submits a selected ticket for a follow-up:
+1. Use the selected ticket context supplied by the component.
+2. Identify the exact ticket number in the response.
+3. Explain its purpose, rollout status, priority, ownership, potential impact, and practical next steps.
+4. Clearly distinguish facts present in the ticket from recommendations or interpretation.
+5. If a requested detail is missing from the supplied context, say that it is not provided.
+
 Do not invent source IDs, rollout status, priority, assignment, dates, or URLs.

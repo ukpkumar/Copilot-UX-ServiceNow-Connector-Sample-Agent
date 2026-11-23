@@ -3,7 +3,7 @@
   "solution": {
     "name": "service-now-copilot-updates-ux-client-side-solution",
     "id": "b9cbe395-9131-4cda-9459-60cc35f459bf",
-    "version": "1.0.0.0",
+    "version": "1.1.0.0",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "developer": {

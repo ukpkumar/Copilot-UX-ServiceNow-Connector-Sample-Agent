@@ -100,10 +100,14 @@
 .iconButton,
 .secondaryButton,
 .primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--sn-border);
   border-radius: 7px;
   cursor: pointer;
   font: inherit;
+  text-decoration: none;
 }
 
 .iconButton {
@@ -125,10 +129,13 @@
   color: #ffffff;
   background: var(--sn-accent);
   border-color: var(--sn-accent);
-  text-decoration: none;
-
   &:hover {
     background: var(--sn-accent-dark);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.65;
   }
 }
 
@@ -396,6 +403,24 @@
   line-height: 1.55;
 }
 
+.detailsActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.followUpStatus {
+  margin: 12px 2px 0;
+  color: var(--sn-accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.followUpError {
+  color: var(--sn-danger);
+}
+
 @media (max-width: 900px) {
   .metrics {
     grid-template-columns: repeat(2, 1fr);
@@ -418,6 +443,10 @@
   .header,
   .detailsHeader {
     flex-direction: column;
+  }
+
+  .detailsActions {
+    justify-content: flex-start;
   }
 
   .metrics,

@@ -17,6 +17,11 @@ This implementation follows Microsoft’s native [Copilot UX component](https://
 
 These tenant test captures show portfolio filtering, record drill-down, and inline or fullscreen rendering with the same native component.
 
+<p align="center">
+  <img src="./assets/screenshots/servicenow-copilot-ticket-submit.png" alt="Selected change ticket submitted from the Copilot UX component to the declarative-agent conversation" width="1200">
+</p>
+<p align="center"><sub>Selecting a ticket and choosing <strong>Submit ticket to Copilot</strong> publishes the record as model context and starts a ticket-specific follow-up.</sub></p>
+
 ## What this sample demonstrates
 
 - SPFx `CopilotComponent` with `copilotType: "Ux"`
@@ -29,6 +34,8 @@ These tenant test captures show portfolio filtering, record drill-down, and inli
 - Change portfolio KPIs and status distribution
 - Keyboard-accessible work-queue row selection
 - Detailed source, ownership, priority, status, and description view
+- Selected-ticket submission back to the Copilot conversation
+- Model context for ticket-specific explanations and recommended next steps
 - Bundled sample data for immediate Workbench testing
 - Optional `records` property for future live connector results
 
@@ -42,6 +49,7 @@ flowchart LR
     S[Bundled Copilot update records] --> C
     L[Future live ServiceNow action] -. same record contract .-> C
     C --> X[Inline or fullscreen change intelligence UX]
+    X -->|Submit selected ticket| A
 ```
 
 The sample intentionally separates the **UX component** from the **data provider**:
@@ -131,6 +139,8 @@ Confirm:
 - metric cards contain nonzero values;
 - product, status, time-window, and search filters work;
 - selecting a work-queue row opens the change details;
+- **Submit ticket to Copilot** sends the selected record into the conversation;
+- Copilot responds with the selected ticket number, facts, potential impact, and next steps;
 - source, Roadmap ID, priority, state, assignment, and modified date appear;
 - the Microsoft source link uses HTTP/HTTPS;
 - fullscreen mode opens from the header;
@@ -154,6 +164,8 @@ Show changes that are rolling out or still in development.
 ```
 
 The declarative-agent instructions tell Copilot to pass period, product, and rollout status to the native UX tool.
+
+To ask about a specific ticket, select its work-queue row and choose **Submit ticket to Copilot**. The component publishes the selected record as model context and sends a user-triggered follow-up message. Copilot then explains that ticket in the existing conversation without requiring the user to copy its number or description manually.
 
 ## ServiceNow-style data contract
 
