@@ -1,0 +1,22 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "whichFolder": "subdir",
+    "solutionName": "service-now-copilot-updates-ux",
+    "environment": "spo",
+    "packageManager": "npm",
+    "skipFeatureDeployment": true,
+    "useGulp": false,
+    "componentType": "copilotComponent",
+    "template": "none",
+    "componentName": "ServiceNowCopilotUpdates",
+    "componentDescription": "Explore Copilot update data through a ServiceNow-style native Copilot UX",
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "26.13.0",
+    "sdksVersions": {},
+    "version": "1.24.1",
+    "libraryName": "service-now-copilot-updates-ux",
+    "libraryId": "b9cbe395-9131-4cda-9459-60cc35f459bf",
+    "solutionShortDescription": "service-now-copilot-updates-ux description"
+  }
+}

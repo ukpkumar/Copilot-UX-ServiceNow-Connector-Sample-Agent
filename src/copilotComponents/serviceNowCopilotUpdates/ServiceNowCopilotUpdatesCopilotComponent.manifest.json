@@ -1,0 +1,25 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-component-manifest.schema.json",
+  "id": "e0a17631-57aa-4824-b1b4-d4fbe833e99a",
+  "alias": "ServiceNowCopilotUpdatesCopilotComponent",
+  "componentType": "CopilotComponent",
+  "copilotType": "Ux",
+  "version": "*",
+  "manifestVersion": 2,
+
+  "capabilities": {
+    "availableDisplayModes": ["inline", "fullscreen"]
+  },
+
+  "tools": [
+    {
+      "name": "ServiceNowCopilotUpdatesTool",
+      "description": {
+        "default": "Render Copilot update records as a ServiceNow-style change intelligence work queue with filters, metrics, and record details."
+      },
+      "propertiesSchema": {
+        "id": "$../../../lib/copilotComponents/serviceNowCopilotUpdates/ServiceNowCopilotUpdatesCopilotComponentProperties.js:default;"
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "title": "Copilot update change portfolio",
+  "timeWindowDays": 30,
+  "product": "Copilot Studio",
+  "status": "Generally available",
+  "connectorName": "ServiceNow Connector Sample"
+}

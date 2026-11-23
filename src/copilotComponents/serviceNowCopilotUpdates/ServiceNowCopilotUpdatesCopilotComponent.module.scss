@@ -1,0 +1,427 @@
+.serviceNowCopilotUpdates {
+  --sn-bg: #f5f7f8;
+  --sn-surface: #ffffff;
+  --sn-surface-soft: #eef2f3;
+  --sn-border: #d5dcdf;
+  --sn-text: #172126;
+  --sn-muted: #5b6870;
+  --sn-accent: #28763a;
+  --sn-accent-dark: #1e5d2c;
+  --sn-accent-soft: #e4f2e7;
+  --sn-danger: #b42318;
+  --sn-warning: #b54708;
+  --sn-info: #175cd3;
+
+  overflow: hidden;
+  padding: 16px;
+  color: var(--sn-text);
+  background: var(--sn-bg);
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.dark {
+  --sn-bg: #1f2528;
+  --sn-surface: #293034;
+  --sn-surface-soft: #323b40;
+  --sn-border: #465158;
+  --sn-text: #f0f3f4;
+  --sn-muted: #bec7cb;
+  --sn-accent: #6ac77d;
+  --sn-accent-dark: #92d9a0;
+  --sn-accent-soft: #253f2c;
+  --sn-danger: #ff8a80;
+  --sn-warning: #ffb86b;
+  --sn-info: #84adff;
+}
+
+.fullscreen {
+  min-height: calc(100vh - 32px);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 24px;
+  border: 1px solid var(--sn-border);
+  border-radius: 14px;
+  background: var(--sn-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+
+  h1 {
+    margin: 5px 0 5px;
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  p {
+    margin: 0;
+    color: var(--sn-muted);
+    font-size: 13px;
+  }
+}
+
+.eyebrow,
+.sectionLabel {
+  color: var(--sn-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.connectorBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid var(--sn-border);
+  border-radius: 999px;
+  color: var(--sn-muted);
+  background: var(--sn-surface-soft);
+  font-size: 12px;
+  white-space: nowrap;
+
+  span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--sn-accent);
+  }
+}
+
+.iconButton,
+.secondaryButton,
+.primaryButton {
+  border: 1px solid var(--sn-border);
+  border-radius: 7px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.iconButton {
+  width: 34px;
+  height: 34px;
+  color: var(--sn-text);
+  background: var(--sn-surface);
+  font-size: 18px;
+}
+
+.secondaryButton {
+  padding: 6px 10px;
+  color: var(--sn-text);
+  background: var(--sn-surface);
+}
+
+.primaryButton {
+  padding: 8px 12px;
+  color: #ffffff;
+  background: var(--sn-accent);
+  border-color: var(--sn-accent);
+  text-decoration: none;
+
+  &:hover {
+    background: var(--sn-accent-dark);
+  }
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.metric {
+  padding: 14px;
+  border: 1px solid var(--sn-border);
+  border-radius: 10px;
+  background: var(--sn-surface);
+
+  span,
+  small {
+    display: block;
+    color: var(--sn-muted);
+    font-size: 11px;
+  }
+
+  strong {
+    display: block;
+    margin: 4px 0 2px;
+    font-size: 24px;
+  }
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.sidebar,
+.content {
+  padding: 16px;
+  border: 1px solid var(--sn-border);
+  border-radius: 12px;
+  background: var(--sn-surface);
+}
+
+.panelHeading,
+.detailsHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+
+  h2 {
+    margin: 3px 0 0;
+    font-size: 16px;
+  }
+}
+
+.field {
+  display: block;
+  margin-bottom: 12px;
+
+  span {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--sn-muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  select,
+  input {
+    width: 100%;
+    min-height: 34px;
+    padding: 6px 8px;
+    color: var(--sn-text);
+    background: var(--sn-surface);
+    border: 1px solid var(--sn-border);
+    border-radius: 7px;
+    font: inherit;
+  }
+}
+
+.statusChart {
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--sn-border);
+}
+
+.statusRow {
+  margin-top: 10px;
+
+  > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+    color: var(--sn-muted);
+    font-size: 11px;
+  }
+}
+
+.track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--sn-surface-soft);
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--sn-accent);
+  }
+}
+
+.dataNote {
+  color: var(--sn-muted);
+  font-size: 11px;
+  text-align: right;
+}
+
+.tableWrap {
+  overflow: auto;
+  max-height: 410px;
+  border: 1px solid var(--sn-border);
+  border-radius: 9px;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  th,
+  td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--sn-border);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    color: var(--sn-muted);
+    background: var(--sn-surface-soft);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    cursor: pointer;
+  }
+
+  tbody tr:hover,
+  tbody tr:focus,
+  .selected {
+    outline: none;
+    background: var(--sn-accent-soft);
+  }
+
+  td strong,
+  td small {
+    display: block;
+  }
+
+  td small {
+    margin-top: 3px;
+    color: var(--sn-muted);
+  }
+}
+
+.number {
+  color: var(--sn-info);
+  font-family: Consolas, "Courier New", monospace;
+  white-space: nowrap;
+}
+
+.priority,
+.status {
+  display: inline-block;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: var(--sn-surface-soft);
+  white-space: nowrap;
+}
+
+.priority1 {
+  color: var(--sn-danger);
+  background: rgba(180, 35, 24, 0.1);
+}
+
+.priority2 {
+  color: var(--sn-warning);
+  background: rgba(181, 71, 8, 0.1);
+}
+
+.priority3,
+.priority4,
+.priority5 {
+  color: var(--sn-info);
+  background: rgba(23, 92, 211, 0.1);
+}
+
+.empty {
+  padding: 28px !important;
+  color: var(--sn-muted);
+  text-align: center !important;
+}
+
+.selectionHint,
+.details {
+  margin-top: 12px;
+  padding: 15px;
+  border: 1px solid var(--sn-border);
+  border-radius: 10px;
+  background: var(--sn-surface-soft);
+}
+
+.selectionHint {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  span {
+    color: var(--sn-muted);
+    font-size: 12px;
+  }
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 10px;
+
+  div {
+    padding: 9px;
+    border-radius: 7px;
+    background: var(--sn-surface);
+  }
+
+  span,
+  strong {
+    display: block;
+  }
+
+  span {
+    margin-bottom: 3px;
+    color: var(--sn-muted);
+    font-size: 10px;
+    text-transform: uppercase;
+  }
+
+  strong {
+    font-size: 12px;
+  }
+}
+
+.description {
+  margin: 12px 2px 0;
+  color: var(--sn-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+@media (max-width: 900px) {
+  .metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .detailGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .serviceNowCopilotUpdates {
+    padding: 8px;
+  }
+
+  .header,
+  .detailsHeader {
+    flex-direction: column;
+  }
+
+  .metrics,
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+}

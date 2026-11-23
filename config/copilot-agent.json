@@ -1,0 +1,16 @@
+{
+  "$schema": "../node_modules/@microsoft/spfx-heft-plugins/lib-commonjs/plugins/copilotAgentPlugin/copilot-agent.schema.json",
+  "agents": [
+    {
+      "name": {
+        "default": "ServiceNow Copilot Change Intelligence"
+      },
+      "description": {
+        "default": "Explore Microsoft Copilot updates as a ServiceNow-style change portfolio using a native Copilot UX component."
+      },
+      "components": [
+        "e0a17631-57aa-4824-b1b4-d4fbe833e99a"
+      ]
+    }
+  ]
+}

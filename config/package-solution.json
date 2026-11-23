@@ -1,0 +1,39 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "service-now-copilot-updates-ux-client-side-solution",
+    "id": "b9cbe395-9131-4cda-9459-60cc35f459bf",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.24.1"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "service-now-copilot-updates-ux description"
+      },
+      "longDescription": {
+        "default": "service-now-copilot-updates-ux description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "service-now-copilot-updates-ux Feature",
+        "description": "The feature that activates elements of the service-now-copilot-updates-ux solution.",
+        "id": "25f184bc-c08e-4ff1-be7a-f69721ee331d",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/service-now-copilot-updates-ux.sppkg"
+  }
+}

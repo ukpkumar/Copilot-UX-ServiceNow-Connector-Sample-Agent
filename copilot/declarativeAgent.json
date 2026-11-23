@@ -1,0 +1,27 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/copilot/declarative-agent/v1.8/schema.json",
+  "version": "v1.8",
+  "name": "ServiceNow Copilot Change Intelligence",
+  "description": "Explore Microsoft Copilot updates as a ServiceNow-style change portfolio using a native Copilot UX component.",
+  "instructions": "$[file('instruction.txt')]",
+  "conversation_starters": [
+    {
+      "title": "Open change portfolio",
+      "text": "Show the Copilot update change portfolio for the last 30 days."
+    },
+    {
+      "title": "Review Copilot Studio changes",
+      "text": "Show Copilot Studio changes and highlight high-priority items."
+    },
+    {
+      "title": "Review rollout status",
+      "text": "Show changes that are rolling out or still in development."
+    }
+  ],
+  "actions": [
+    {
+      "id": "serviceNowCopilotUpdatesAction",
+      "file": "ai-plugin.json"
+    }
+  ]
+}
